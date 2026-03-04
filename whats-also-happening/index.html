@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What's Also Happening</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #0d0d0d;
+      color: #e8e0d0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      max-width: 700px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      letter-spacing: 0.05em;
+      color: #f0c060;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1rem;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .search-container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 50px;
+    }
+
+    .search-container input {
+      flex: 1;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-family: 'Georgia', serif;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #e8e0d0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-container input:focus { border-color: #f0c060; }
+    .search-container input::placeholder { color: #555; }
+
+    .search-container button {
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-family: 'Georgia', serif;
+      background: #f0c060;
+      color: #0d0d0d;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+      transition: background 0.2s;
+    }
+
+    .search-container button:hover { background: #f5d080; }
+    .search-container button:disabled { background: #555; cursor: not-allowed; color: #888; }
+
+    #status {
+      text-align: center;
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+      min-height: 24px;
+      font-style: italic;
+    }
+
+    #error {
+      text-align: center;
+      color: #e06060;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+      min-height: 24px;
+    }
+
+    #results {
+      width: 100%;
+      max-width: 750px;
+      display: none;
+    }
+
+    .film-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #333;
+    }
+
+    .film-header h2 {
+      font-size: 1.6rem;
+      color: #f0c060;
+      margin-bottom: 6px;
+    }
+
+    .film-header p { color: #888; font-size: 0.9rem; }
+
+    .section-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #f0c060;
+      margin-bottom: 28px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #222;
+    }
+
+    .section { margin-bottom: 50px; }
+
+    .entry {
+      margin-bottom: 36px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .entry:last-child { border-bottom: none; }
+
+    .entry-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .entry-content {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: #d8d0c0;
+    }
+
+    .entry-content p { margin-bottom: 14px; }
+    .entry-content p:last-child { margin-bottom: 0; }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    footer {
+      margin-top: 60px;
+      color: #444;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    @media (max-width: 500px) {
+      header h1 { font-size: 1.8rem; }
+      .search-container { flex-direction: column; }
+      .search-container button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>What's Also Happening</h1>
+    <p>Enter a film title. Discover what was happening in the world — and in fiction — during the same era the story is set in.</p>
+  </header>
+
+  <div class="search-container">
+    <input type="text" id="filmInput" placeholder="Enter a film title..." autocomplete="off" />
+    <button id="searchBtn" onclick="search()">Search</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="error"></div>
+  <div id="results"></div>
+
+  <footer>A game of historical context and fictional company.</footer>
+
+  <script>
+    const filmInput = document.getElementById('filmInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const resultsEl = document.getElementById('results');
+
+    filmInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') search();
+    });
+
+    async function search() {
+      const title = filmInput.value.trim();
+      if (!title) return;
+
+      errorEl.textContent = '';
+      resultsEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+      searchBtn.disabled = true;
+      statusEl.innerHTML = 'Looking up <em>' + escapeHtml(title) + '</em><span class="loading-dots"></span>';
+
+      try {
+        const response = await fetch('/.netlify/functions/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Something went wrong. Please try again.');
+        }
+
+        statusEl.textContent = '';
+        renderResults(data);
+
+      } catch (err) {
+        statusEl.textContent = '';
+        errorEl.textContent = err.message;
+      } finally {
+        searchBtn.disabled = false;
+      }
+    }
+
+    function renderResults(data) {
+      const { filmTitle, filmYear, setPeriod, rawText } = data;
+      const parsed = parseResponse(rawText);
+
+      let html = '<div class="film-header">';
+      html += '<h2>' + escapeHtml(filmTitle.toUpperCase()) + ' (' + escapeHtml(String(filmYear)) + ')</h2>';
+      html += '<p>Set in ' + escapeHtml(setPeriod) + '</p>';
+      html += '</div>';
+
+      if (parsed.history.length > 0) {
+        html += '<div class="section"><div class="section-title">What\'s Also Happening in History</div>';
+        parsed.history.forEach(function(entry) {
+          html += '<div class="entry">';
+          if (entry.label) html += '<div class="entry-label">' + escapeHtml(entry.label) + '</div>';
+          html += '<div class="entry-content">' + formatEntryText(entry.text) + '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      if (parsed.fiction.length > 0) {
+        html += '<div class="section"><div class="section-title">Who Else Is Out There in Fiction</div>';
+        parsed.fiction.forEach(function(entry) {
+          html += '<div class="entry">';
+          if (entry.label) html += '<div class="entry-label">' + escapeHtml(entry.label) + '</div>';
+          html += '<div class="entry-content">' + formatEntryText(entry.text) + '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      if (parsed.history.length === 0 && parsed.fiction.length === 0) {
+        html += '<div class="section"><div class="entry-content">' + formatEntryText(rawText) + '</div></div>';
+      }
+
+      resultsEl.innerHTML = html;
+      resultsEl.style.display = 'block';
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function parseResponse(text) {
+      const result = { history: [], fiction: [] };
+      const historyIdx = text.search(/WHAT.?S ALSO HAPPENING IN HISTORY/i);
+      const fictionIdx = text.search(/WHO ELSE IS OUT THERE IN FICTION/i);
+
+      if (historyIdx === -1) return result;
+
+      const historyBlock = fictionIdx !== -1 ? text.substring(historyIdx, fictionIdx) : text.substring(historyIdx);
+      const fictionBlock = fictionIdx !== -1 ? text.substring(fictionIdx) : '';
+
+      result.history = parseEntries(historyBlock);
+      result.fiction = parseEntries(fictionBlock);
+      return result;
+    }
+
+    function parseEntries(block) {
+      const entries = [];
+      const lines = block.split(/\n\n+/);
+      let currentEntry = null;
+
+      lines.forEach(function(line) {
+        line = line.trim();
+        if (!line) return;
+        if (/WHAT.?S ALSO HAPPENING IN HISTORY/i.test(line)) return;
+        if (/WHO ELSE IS OUT THERE IN FICTION/i.test(line)) return;
+
+        const isLabel = line.length < 120 && (
+          /^[A-Z][^.!?]*[—\-–]/.test(line) ||
+          /^\*\*/.test(line) ||
+          /^\*[^*]/.test(line)
+        );
+
+        if (isLabel) {
+          if (currentEntry && currentEntry.text) entries.push(currentEntry);
+          currentEntry = { label: line.replace(/\*+/g, '').trim(), text: '' };
+        } else {
+          if (!currentEntry) currentEntry = { label: '', text: '' };
+          currentEntry.text += (currentEntry.text ? '\n\n' : '') + line;
+        }
+      });
+
+      if (currentEntry && currentEntry.text) entries.push(currentEntry);
+      return entries;
+    }
+
+    function formatEntryText(text) {
+      if (!text) return '';
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .split(/\n\n+/)
+        .filter(function(p) { return p.trim(); })
+        .map(function(p) { return '<p>' + escapeHtml(p.trim()) + '</p>'; })
+        .join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+
+</body>
+</html>
