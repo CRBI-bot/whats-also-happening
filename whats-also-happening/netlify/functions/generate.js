@@ -111,14 +111,14 @@ exports.handler = async function(event, context) {
 
   // Step 2: OpenAI generation
   try {
-const openaiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+const openaiRes = await const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gemini-2.0-flash',
+        model: 'gpt-4o',
         max_tokens: 2500,
         temperature: 0.7,
         messages: [
@@ -129,8 +129,7 @@ const openaiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/
     });
 if (!openaiRes.ok) {
       const errData = await openaiRes.json();
-      const errMsg = errData.error?.message || errData.message || JSON.stringify(errData);
-      throw new Error(`Gemini error ${openaiRes.status}: ${errMsg}`);
+      throw new Error(errData.error?.message || 'OpenAI request failed');
     }
 
     const openaiJson = await openaiRes.json();
