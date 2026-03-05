@@ -111,29 +111,30 @@ exports.handler = async function(event, context) {
 
   // Step 2: OpenAI generation
   try {
-const openaiRes = await const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+const openaiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'x-api-key': OPENAI_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2500,
-        temperature: 0.7,
+        system: SYSTEM_PROMPT,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userMessage }
         ]
       })
     });
-if (!openaiRes.ok) {
+
+    if (!openaiRes.ok) {
       const errData = await openaiRes.json();
-      throw new Error(errData.error?.message || 'OpenAI request failed');
+      throw new Error(errData.error?.message || 'Anthropic request failed');
     }
 
     const openaiJson = await openaiRes.json();
-    const rawText = openaiJson.choices[0].message.content;
+    const rawText = openaiJson.content[0].text;
     const setPeriodMatch = rawText.match(/SET IN:\s*(.+)/i);
     const setPeriod = setPeriodMatch ? setPeriodMatch[1].trim() : 'period unknown';
 
@@ -150,6 +151,6 @@ if (!openaiRes.ok) {
     };
 
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate entry: ' + e.message }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate entry: ' + e.message + ' | stack: ' + e.stack }) };
   }
 };
