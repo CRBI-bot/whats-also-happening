@@ -127,9 +127,10 @@ const openaiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/
         ]
       })
     });
-    if (!openaiRes.ok) {
+if (!openaiRes.ok) {
       const errData = await openaiRes.json();
-      throw new Error(errData.error?.message || 'OpenAI request failed');
+      const errMsg = errData.error?.message || errData.message || JSON.stringify(errData);
+      throw new Error(`Gemini error ${openaiRes.status}: ${errMsg}`);
     }
 
     const openaiJson = await openaiRes.json();
