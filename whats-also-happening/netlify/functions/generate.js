@@ -49,6 +49,7 @@ ABSOLUTE RULES — never violate these:
 TONE: Write with energy and specificity. Specific dates, named people, real places. Present tense where it adds urgency. The goal is to make the reader feel the texture of the world the film inhabits.`;
 
 exports.handler = async function(event, context) {
+  context.callbackWaitsForEmptyEventLoop = false;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
