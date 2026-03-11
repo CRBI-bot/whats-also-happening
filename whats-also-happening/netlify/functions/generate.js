@@ -1,3 +1,5 @@
+// updated
+
 const SYSTEM_PROMPT = `You are the engine behind a game called "What's Also Happening." When given a film title and its metadata, your job is to identify the time period the film is SET IN (not when it was released) and produce two sections of content about that period.
 
 If the film's time setting is ambiguous or spans multiple years, use your best judgment to anchor to the most dramatically significant period within the film.
@@ -154,4 +156,5 @@ const openaiRes = await fetch('https://api.anthropic.com/v1/messages', {
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate entry: ' + e.message + ' | stack: ' + e.stack }) };
   }
+
 };
